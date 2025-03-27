@@ -1,0 +1,370 @@
+clc;
+clear all;
+close all;
+
+%%
+% for scnNum = 1:numel(scenes)
+%     [im,alpha] = exrread(scenes(scnNum));
+%     depthmap = im(:, :, 1);
+%     objmap = imread(objectmaps(scnNum));
+%     figure;
+%     imshowpair(depthmap, objmap, 'montage');
+%     Zmin = min(depthmap(:));
+%     depthmap(depthmap > 100) = -1;
+%     Zmax = max(depthmap(:));
+%     depthstep = 0.2;
+%     histo_value = zeros(1, uint16(abs(Zmin- Zmax) / depthstep)+1);
+%     for ii = 1:size(histo_value, 2)
+%         bin = depthmap > (Zmin + (ii - 1) * depthstep) & depthmap < (Zmin + ii * depthstep);
+%         histo_value(ii) = sum(bin(:));
+%     end
+%     bins = Zmin:depthstep:(Zmin + ii * depthstep);
+%     figure('Name',scenes(scnNum));
+%     histogram(depthmap(:),bins, 'Normalization', 'probability');
+%     title(name(scnNum));
+%     xlabel("depth");
+%     ylabel("percentage");
+% end
+%% Initialization
+scenes = ["vessel_depth.exr" "dining_depth.exr" "dragon_depth.exr" ...
+           "toy_depth.exr" "zoo_depth.exr" "lab_depth.exr" "camper_depth.exr" "bike_depth.exr"...
+           "flower_depth.exr"];
+objectmaps = ["vesselObjectmap2.hdr" "diningObjectmap.hdr" "dragonObjectmap.hdr" ...
+    "toyObjectmap.hdr" "zooObjectmap.hdr" "labObjectmap.hdr" "camperObjectmap.hdr" "bikeObjectmap.hdr" ...
+    "flowerObjectmap.hdr"];
+name = ["Vessel" "Dining" "Dragon" "Toy" "Zoo" "Lab" "Camper" "Bike" "Flower"];
+scnNum = 8;
+startColor = 2;
+if scnNum == 1
+    objnames = ["background"; "blue vessel"; "red vessel"; "heart"];
+    Zmin = [0, -0.46 -0.73 -0.117];
+    Zmax = [0, 0.916 0.934 0.19];
+    Zmedian = [0, -0.308 -0.237 -0.062];
+    std_curvatures = [0.0, 0.0145, 0.0224, 0.0051];
+elseif scnNum == 2
+    objnames = ["ceiling"; "left wall"; "floor"; "wall shelf"; "plant"; "rug"; "puff"; ...
+        "back wall"; "frame"; "dining set"; "light"; "bookshelf"; "globe"; "small table"; ...
+        "lamp"; "right wall"];
+    Zmin = [-0.421, 0.236, -0.57, 0.278, 0.17, -0.577, -0.619, 0.92, 0.914, -0.323, -0.436, 0.838, -0.603, 0.289, 0.29, 0.365];
+    Zmax = [0.904, 0.918, 0.91, 0.81, 0.411, 0.607, -0.504, 0.92, 0.917, 0.125, 0.785, 0.882, -0.448, 0.486, 0.44, 0.918];
+    Zmedian = [0.075, 0.489, 0.149, 0.415, 0.279, -0.14, -0.59, 0.92, 0.91, -0.24, 0.002, 0.842, -0.56, 0.341, 0.341, 0.573];
+    std_curvatures = [0.0, 0.0, 0.001, 0.002, 0.052, 0.0, 0.001, 0.0, 0, 0.013, 0.0, 0.041, 0.003, 0.005, 0.016, 0.0];
+elseif scnNum == 3
+    objnames = ["sky"; "ground"; "dragon"; "sword"; "knight"];
+    Zmin = [0, -0.565, -0.414, -0.709, -0.463];
+    Zmax = [0, 7.155, 0.869, -0.336, -0.320];
+    Zmedian = [0, 0.675, -0.05, -0.516, -0.433];
+    std_curvatures = [0, 0.01, 0.008, 0.002, 0.002];
+elseif scnNum == 4
+    objnames = ["background"; "table"; "whale"; "rubic cube"; "dice green"; "plane"; "cup"; ...
+        "dice red"; "ball 10"; "ball 3"; "teddy"; "soccer ball"; "ball 1"; "dice blue"];
+    Zmin = [1.707, -0.592, -0.603, 0.291, -0.039, -0.25, -0.535, 0.543, -0.078, -0.441, 0.191, 0.002, -0.53, -0.258];
+    Zmax = [1.707, 1.691, -0.41, 0.326, 0.025, 0.125, 0.607, 0.695, -0.016, -0.385, 0.603, 0.119, -0.471, -0.09];
+    Zmedian = [1.707, -0.213, -0.548, 0.312, 0.010, -0.109, 0.555, 0.558, -0.064, -0.414, 0.404, 0.035, -0.514, -0.205];
+    std_curvatures = [0.0, 0.002, 0.023, 0.007, 0.002, 0.007, 0.003, 0.011, 0.002, 0.0, 0.07, 0.0, 0.0, 0.0];
+elseif scnNum == 5
+    objnames = ["wall"; "ground"; "elephant"; " tree"; "lynx"; "rhino"];
+    Zmin = [2, -0.27, -0.675,-0.102, 0.559, -0.398];
+    Zmax = [2, 2, 0.012, 0.843, 0.923, 0.181];
+    Zmedian = [2, 0.473, -0.313, 0.393, 0.655, -0.233];
+    std_curvatures = [0.0, 0.003, 0.008, 0.153, 0.008, 0.003];
+elseif scnNum == 6
+    objnames = ["wall"; "floor"; "left man"; "hazard pole"; "robot"; "woman"; "chair"; "bottle"; ...
+        "basket"; "bottles"; "right man"];
+    Zmin = [1.43, -0.85, -0.323, -0.587, -0.69, 0.543, -0.463, -0.337, -0.337, -0.323, 0.739];
+    Zmax = [1.43, 0.994, -0.174, 0.053, 0.231, 0.865, -0.447, -0.169, -0.169, -0.166, 0.883];
+    Zmedian = [1.43, -0.436, -0.258, -0.546, -0.2, 0.709 ,0.839, -0.46, -0.292, -0.25, 0.802];
+    std_curvatures = [0.0, 0.0, 0.003, 0.011, 0.002, 0.005, 0.007, 0.0, 0.0, 0.005, 0.001];
+elseif scnNum == 7
+    objnames = ["sky"; "ground"; "camper"; "satellite"; "luggage"];
+    Zmin = [0, -1.17, -0.59, 0.18, -0.05];
+    Zmax = [0, 2.77, 0.22, 0.3,  0.38];
+    Zmedian = [0, -0.2, -0.29, 0.25,  0.12];
+    std_curvatures = [0, 0.017, 0.008, 0.006, 0.004];
+elseif scnNum == 8
+    objnames = ["sky"; "grass"; "fence"; "mushroom1"; "trunk"; "woodpecker"; "bike"; ...
+        "mushroom2"; "mushroom3"; " mushroom4"];
+    Zmin = [0, -0.68, -0.51, 0.35, 0.64 0.7 -0.33 0.72 0.68 -0.56 ];
+    Zmax = [0, 0.24, 0.134, -0.26, 1.04 0.75 0.26 0.87 0.78 -0.46 ];
+    Zmedian = [0, -0.37, -0.35, -0.33, 0.84, 0.72, -0.15, 0.78, 0.7 -0.52];
+    % std_curvatures = [0, 0.01, 0.008, 0.002, 0.002];
+elseif scnNum == 9
+    objnames = ["sky"; "BF1"; "BF2"; "bird1"; "flower"; "ant"; "bee1"; ...
+        "BF3"; "bee2"; "bird2"; "bee3"];
+    Zmin = [0, 0.19, -0.59, 0.05, -0.23 -0.07 0.8 0.48 0.16 -0.51 0.17];
+    Zmax = [0, 0.32, -0.54, 0.13, 0.24, -0.05, 0.88, 0.55, -0.09, -0.37, 0.25];
+    Zmedian = [0, 0.24, -0.56, 0.08, -0.04, -0.06, 0.85, 0.51, -0.14, -0.45, 0.21];
+end
+dist2screen = 3;
+[im,alpha] = exrread(scenes(scnNum));
+depthmap = im(:, :, 1);
+objmap = hdrread(objectmaps(scnNum));
+rgbImg = imread(strcat(name(scnNum), ".png"));
+mapSize = size(objmap);
+colors = ones(100, 3)*100;
+figure;
+imagesc(depthmap);
+figure;
+imagesc(objmap);
+figure;
+imagesc(rgbImg);
+objmap = reshape(objmap, size(objmap, 1)*size(objmap, 2), 3);
+objmap = objmap * 10;
+count = 1;
+%% Find various colors in the map
+if scnNum == 4
+    for ii = 1:size(objmap, 1)
+        if (round(objmap(ii, :)) == [0 9 0])
+            objmap(ii, :) = [0 10 0];
+        elseif round(objmap(ii, :)) == [1 9 4]
+            objmap(ii, :) = [1 10 4];
+        elseif round(objmap(ii, :)) == [1 10 5]
+            objmap(ii, :) = [1 10 4];
+        end
+    end
+end
+if scnNum == 9
+    for ii = 1:size(objmap, 1)
+        if (round(objmap(ii, :)) == [0 0 8])
+            objmap(ii, :) = [0 0 10];
+        end
+    end
+end
+for ii = 1:size(objmap, 1)
+    if (~ismember(round(objmap(ii, :)), colors, 'rows'))
+        colors(count, :) = round(objmap(ii, :));
+        count = count + 1;
+    end
+end
+colors = colors(1:count-1, :);
+
+% if scnNum == 1 | scnNum == 3
+%     startColor = 2;
+% end
+
+%% Compute the depth distribution of each object in the scene.
+depthDists = [];
+objects = [];
+for cc = startColor:size(colors, 1)
+    idx = find( ...
+          round(objmap(:, 1)) == colors(cc, 1) ...
+        & round(objmap(:, 2)) == colors(cc, 2) ...
+        & round(objmap(:, 3)) == colors(cc, 3));
+    depthDist = depthmap(idx) - dist2screen;
+    depthDist(depthDist > 20) = [];
+    object = repmat({objnames(cc)}, numel(depthDist), 1);
+    objects = [objects;object];
+    depthDists = [depthDists;depthDist];
+end
+dofRange = 0.1;
+figure;
+patch([0 0 (count - 0) (count - 0)], [dofRange -dofRange -dofRange dofRange], [1.0 0.0 0.0], 'FaceAlpha', 0.3);
+hold on
+
+boxplot(depthDists,objects, 'Symbol','');
+xlabel('Object ID');
+ylim([-1.5 3.3])
+ylabel('distance from the screen')
+title(name(scnNum))
+hold off;
+%% Compute the perimeter-area ratio of each object in the scene
+% boundary = zeros(size(colors, 1), mapSize(1), mapSize(2));
+% perimeter_area = zeros(size(colors, 1), 1);
+% for color = startColor:size(colors, 1)
+%     tempObjmap = objmap;
+%     idx = find(round(objmap(:, 1)) ~= colors(color, 1) ...
+%         | round(objmap(:, 2)) ~= colors(color, 2) ...
+%         | round(objmap(:, 3)) ~= colors(color, 3));
+%     tempObjmap(idx, 1) = 0;
+%     tempObjmap(idx, 2) = 0;
+%     tempObjmap(idx, 3) = 0;
+%     tempObjmap = reshape(tempObjmap, mapSize(1), mapSize(2), mapSize(3));
+%     tempObjmap = im2gray(tempObjmap);
+%     boundary(color, :, :) = edge(tempObjmap,'sobel');
+%     perimeter_area(color) = numel(find(boundary(color, :, :))) / numel(find(tempObjmap(:, :)));
+% end
+%% Compute edge density
+edgeDensity = zeros(size(colors, 1), mapSize(1), mapSize(2));
+edgeDensity_normalized = zeros(size(colors,1), 1);
+ignored_obj = [];
+for color = startColor:size(colors, 1)
+    tempRGBImg = reshape(rgbImg, mapSize(1) * mapSize(2), 3);
+    idx = find(round(objmap(:, 1)) ~= colors(color, 1) ...
+        | round(objmap(:, 2)) ~= colors(color, 2) ...
+        | round(objmap(:, 3)) ~= colors(color, 3));
+    tempRGBImg(idx, 1) = 0;
+    tempRGBImg(idx, 2) = 0;
+    tempRGBImg(idx, 3) = 0;
+    tempRGBImg = reshape(tempRGBImg, mapSize(1), mapSize(2), 3);
+    grayTempRGBImg = im2gray(tempRGBImg);
+    edgeDensity(color, :, :) = edge(grayTempRGBImg, "sobel");
+    edgeDensity_normalized(color) = numel(find(edgeDensity(color, :, :))) / numel(find(grayTempRGBImg(:, :)));
+    if edgeDensity_normalized(color) >= 1
+        ignored_obj(end+1) = color;
+    end
+    % figure;
+    % imshowpair(im2gray(tempRGBImg), squeeze(edgeDensity(color, :, :)), 'montage');
+end
+%% Compute contrast in DoF and out of DoF
+% tempDepthmap = depthmap(:) - dist2screen;
+% tempDepthmap(tempDepthmap > -0.2 & tempDepthmap < 0.2) = 0.0;
+% tempDepthmap(tempDepthmap < -0.2 | tempDepthmap > 0.2) = 1.0;
+% tempDepthmap = reshape(tempDepthmap, mapSize(1), mapSize(2));
+% if scnNum == 4
+%     outDoFImg = immultiply(rgbImg, uint16(repmat(tempDepthmap, 1, 1, 3)));
+%     DoFImg = immultiply(rgbImg, uint16(repmat(1-tempDepthmap, 1, 1, 3)));
+% else
+%     outDoFImg = immultiply(rgbImg, uint8(repmat(tempDepthmap, 1, 1, 3)));
+%     DoFImg = immultiply(rgbImg, uint8(repmat(1-tempDepthmap, 1, 1, 3)));
+% end
+% 
+% outDoFImgLight = round(rgb2lightness(outDoFImg) * 10)/10;
+% nonZero_Idx_out = find(outDoFImgLight(:));
+% range_out = max(outDoFImgLight(nonZero_Idx_out)) - min(outDoFImgLight(nonZero_Idx_out));
+% contrast_DoF_out = (median(outDoFImgLight(nonZero_Idx_out)) + 0.05) / (range_out + 0.05);
+% imshow(outDoFImgLight, []);
+% DoFImgLight = round(rgb2lightness(DoFImg) * 10);
+% nonZero_Idx_in = find(DoFImgLight(:));
+% range_in = max(DoFImgLight(nonZero_Idx_in)) - min(DoFImgLight(nonZero_Idx_in));
+% contrast_DoF_in = (median(DoFImgLight(nonZero_Idx_in)) + 0.05) / (range_in + 0.05);
+%% Compute entropy for each single object
+entropy_obj = zeros(size(colors,1), 1);
+for color = startColor:size(colors, 1)
+    tempRGBImg = reshape(rgbImg, mapSize(1) * mapSize(2), 3);
+    idx = find(round(objmap(:, 1)) ~= colors(color, 1) ...
+        | round(objmap(:, 2)) ~= colors(color, 2) ...
+        | round(objmap(:, 3)) ~= colors(color, 3));
+    tempRGBImg(idx, 1) = 0;
+    tempRGBImg(idx, 2) = 0;
+    tempRGBImg(idx, 3) = 0;
+    tempRGBImg = reshape(tempRGBImg, mapSize(1), mapSize(2), 3);
+    J = entropyfilt(rescale(im2gray(tempRGBImg)));
+    J(find(J(:)== 0)) = [];
+    entropy_obj(color) = mean(J(:));
+    % entropy_obj(color) = entropy(rescale(im2gray(tempRGBImg)));
+end
+
+%% Compute each object curvature
+% mean_curvatures = zeros(size(colors,1), 1);
+% for color = startColor:size(colors, 1)
+%     tempDepthmap = reshape(depthmap, mapSize(1) * mapSize(2), 1);
+%     idx = find(round(objmap(:, 1)) ~= colors(color, 1) ...
+%         | round(objmap(:, 2)) ~= colors(color, 2) ...
+%         | round(objmap(:, 3)) ~= colors(color, 3));
+%     tempDepthmap(idx) = 0;
+%     tempDepthmap = reshape(tempDepthmap, mapSize(1), mapSize(2));
+%     [dz_dx, dz_dy] = gradient(tempDepthmap);
+%     dz_dx(abs(dz_dx) > 1) = 0;
+%     dz_dy(abs(dz_dy) > 1) = 0;
+%     % Compute second-order gradients (Hessian matrix components)
+%     [d2z_dx2, d2z_dxdy] = gradient(dz_dx);
+%     [d2z_dydx, d2z_dy2] = gradient(dz_dy);
+% 
+%     % Compute principal curvatures (eigenvalues of the Hessian matrix)
+%     Hessian = cat(3, d2z_dx2, d2z_dxdy, d2z_dydx, d2z_dy2);
+%     eigenvalues = zeros(mapSize(1), mapSize(2), 2);
+% 
+%     for i = 1:mapSize(1)
+%         for j = 1:mapSize(2)
+%             H = [Hessian(i, j, 1), Hessian(i, j, 2); Hessian(i, j, 3), Hessian(i, j, 4)];
+%             eigenvalues(i, j, :) = eig(H);
+%         end
+%     end
+% 
+%     % Mean and Gaussian curvature
+%     surface = (dz_dx.^2 .* dz_dy.^2) - (dz_dx .* dz_dy).^2;
+%     mean_curvature = mean(eigenvalues, 3);
+%     mean_curvatures(color) = std(mean_curvature(find(mean_curvature(:))));
+%     % mean_curvatures(color) = sum(mean_curvature(:) .* surface(:));  
+% end
+%% Calculate the metric
+W = 0;
+% normalized_std_curve = (mean_curvatures' - min(mean_curvatures))/(max(mean_curvatures) - min(mean_curvatures));
+normalized_std_curve = (std_curvatures - min(std_curvatures))/(max(std_curvatures) - min(std_curvatures));
+normalized_edgeDensity_normalized = (edgeDensity_normalized - min(edgeDensity_normalized))/(max(edgeDensity_normalized) - min(edgeDensity_normalized));
+normalized_entropy = (entropy_obj - min(entropy_obj))/(max(entropy_obj) - min(entropy_obj));
+% normalized_entropy = entropy_obj/norm(entropy_obj);
+% normalized_std_curve = std_curvatures/norm(std_curvatures);
+% normalized_edgeDensity_normalized = edgeDensity_normalized/norm(edgeDensity_normalized);
+
+w1 = (normalized_std_curve' + normalized_edgeDensity_normalized + normalized_entropy) / 3;
+% w1 = (std_curvatures' + edgeDensity_normalized + entropy_obj)/3;
+% w2 = abs(Zmin - Zmedian) .* min(abs(Zmin - dofRange), abs(Zmin + dofRange));
+% w2 = abs(Zmin - Zmedian) + min(abs(Zmin - dofRange), abs(Zmin + dofRange));
+w2 = min(abs(Zmin - dofRange), abs(Zmin + dofRange));
+
+% w3 = abs(Zmax - Zmedian) .* min(abs(Zmax - dofRange), abs(Zmax + dofRange));
+% w3 = abs(Zmax - Zmedian) + min(abs(Zmax - dofRange), abs(Zmax + dofRange));
+w3 = min(abs(Zmax - dofRange), abs(Zmax + dofRange));
+
+
+for color = startColor:size(colors, 1)
+    if ~any(ignored_obj == color)
+        tempDepthmap = depthmap(:) - dist2screen;
+        tempRGBImg = reshape(rgbImg, mapSize(1) * mapSize(2), 3);
+        idx = find(round(objmap(:, 1)) ~= colors(color, 1) ...
+            | round(objmap(:, 2)) ~= colors(color, 2) ...
+            | round(objmap(:, 3)) ~= colors(color, 3));
+        tempRGBImg(idx, 1) = 0;
+        tempRGBImg(idx, 2) = 0;
+        tempRGBImg(idx, 3) = 0;
+        tempRGBImg = reshape(tempRGBImg, mapSize(1), mapSize(2), 3);
+        idxDoF = (tempDepthmap > -0.2 & tempDepthmap < 0.2);
+        idxOutDoF = (tempDepthmap < -0.2 | tempDepthmap > 0.2);
+        outDoFIm = tempDepthmap;
+        outDoFIm(idxOutDoF) = 1.0;
+        outDoFIm(idxDoF) = 0.0;
+        outDoFIm(idx, 1) = 0;
+        DoFIm = tempDepthmap;
+        DoFIm(idxDoF) = 1.0;
+        DoFIm(idxOutDoF) = 0.0;
+        DoFIm(idx, 1) = 0;
+        outDoFIm = reshape(outDoFIm, mapSize(1), mapSize(2));
+        DoFIm = reshape(DoFIm, mapSize(1), mapSize(2));
+        DoFArea = numel(find(DoFIm(:)));
+        outDoFArea = numel(find(outDoFIm(:)));
+        if(abs(Zmin(color)) > dofRange && abs(Zmax(color)) > dofRange)
+            W = W - (w2(color) * w3(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+        elseif(abs(Zmin(color)) > dofRange && abs(Zmax(color)) < dofRange)
+            W = W - (w2(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+            % W = W - w2(color) * w1(color);
+            % W = W - w1(color) * outDoFArea/(outDoFArea + DoFArea);
+       elseif(abs(Zmin(color)) < dofRange && abs(Zmax(color)) > dofRange)
+            W = W - (w3(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+            % W = W - w3(color) * w1(color);
+        % if(cond1 || cond2)
+        %    W = W - ( ) * outDoFArea/(outDoFArea + DoFArea);
+        % end
+        else
+            W = W + (w1(color) *  abs(Zmin(color) - Zmax(color)));
+        end
+    end
+end
+W = W / (size(colors, 1) - (startColor-1));
+disp(W);
+
+
+
+%% plot the metrics
+% figure;
+% scatter(startColor:size(colors, 1), std_curvatures(startColor:end) * 5.0, 'red');
+% hold on;
+% scatter(startColor:size(colors, 1), entropy_obj(startColor:end) * 0.2, 'blue');
+% hold on;
+% scatter(startColor:size(colors, 1), perimeter_area(startColor:end), 'green');
+% hold on;
+% scatter(startColor:size(colors, 1), edgeDensity_normalized(startColor:end), 'cyan');
+% hold on;
+% plot(startColor:size(colors, 1), std_curvatures(startColor:end) * 5.0, 'red');
+% hold on;
+% plot(startColor:size(colors, 1), entropy_obj(startColor:end) * 0.2, 'blue');
+% hold on;
+% plot(startColor:size(colors, 1), perimeter_area(startColor:end), 'green');
+% hold on;
+% plot(startColor:size(colors, 1), edgeDensity_normalized(startColor:end), 'cyan');
+% hold on;
+% title("feature value");
+% xlabel("object");
+% ylabel("value");
+% legend("Curvature", "Entropy", "P/A", "E/A");
+% hold off;

@@ -89,7 +89,7 @@ ylim([0 15])
 xlim([-1, 15])
 hold off;
 %%
-aperture_scene_val = [0 12 9];
+aperture_scene_val = [0 9 9];
 metric_scene_val = [10.17, 2.35, 0.87];
 labels_val = ["C" "G" "F"];
 figure;

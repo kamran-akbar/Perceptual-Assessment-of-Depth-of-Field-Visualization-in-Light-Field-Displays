@@ -2,11 +2,11 @@
 clc;
 clear all;
 close all;
-%%
-aperture_scene = [9, 9, 0, 9, 9, 9];
+aperture_scene = [0, 9, 0, 9, 9, 9];
 % metric_scene = [0.647, 0.15, 3.18, 0.13, 0.42, 0.25]; %w1w2w3
 % metric_scene = [0.136, 0.075, 0.388, 0.0935, 0.2642, 0.063]; %w1w2w3_0.2DoF
-metric_scene = [0.19, 0.094, 0.52, 0.093, 0.22, 0.067]; %w1w2w3_0.1DoF
+% metric_scene = [0.19, 0.094, 0.52, 0.093, 0.22, 0.067]; %w1w2w3_0.1DoF
+metric_scene = [3.13, 1.84,6.00, 1.12, 2.13, 1.23]; %w1(w2+w3)_0.1DoF_normalized
 % metric_scene = [1.18, 0.4, 2.5, 0.24, 0.54, 0.41];    %w1(w2+w3)
 % metric_scene = [1.8, 1.49, 4.35, 0.96, 1.95, 1.52];   %w1+w2+w3
 labels = ["V" "R" "D" "T" "Z" "L"];
@@ -15,9 +15,9 @@ metric_scene_val = [0.489, 0.02, 0.094];
 rho = corr(aperture_scene',metric_scene');
 
 modelFun = @(b,x) b(3)./(1+exp(b(1).*(x-b(2))));
-start = [48 0.4 9];
-xx = 0.0:0.000001:0.7;
-% y = start(3)./(1+exp(start(1).*(xx-start(2))));
+start = [16 2 9];
+xx = -1:0.000001:15;
+y = start(3)./(1+exp(start(1).*(xx-start(2))));
 % figure;
 % plot(xx, y);
 
@@ -49,6 +49,7 @@ line(xx,predict(nlm,xx'),'linestyle','--','color','k');
 title("Dining sharp, Lab sharp");
 xlabel("Metric");
 ylabel("Aperture");
+xlim([-1, 15])
 hold off;
 %%
 min_pref_aperture =min(aperture_scene);
@@ -83,22 +84,23 @@ textPosX = metric_scene -0.005;
 textPosX(2) = textPosX(2) - 0.01;
 textPosX(4) = textPosX(4) + 0.01;
 textPosY = aperture_scene + 0.7;
-text(textPosX, textPosY, labels, "FontSize", 10);
+text(textPosX, textPosY, labels, "FontSize", 10, 'FontName', 'Times');
 ylim([0 15])
+xlim([-1, 15])
 hold off;
 %%
 aperture_scene_val = [0 12 9];
-metric_scene_val = [0.55, 0.12, 0.041];
+metric_scene_val = [10.17, 2.35, 0.87];
 labels_val = ["C" "G" "F"];
 figure;
 blur_model =predict(nlm,xx');
 line(xx, blur_model,'linestyle','--','color','b');
 hold on;
 scatter(metric_scene_val, aperture_scene_val, 'color', 'b');
-text(metric_scene_val, aperture_scene_val+0.5,labels_val)
+text(metric_scene_val, aperture_scene_val+0.5,labels_val, 'FontName', 'Times')
 xlabel("$f$", 'Interpreter','latex', 'FontSize', 14);
 ylabel("Aperture Radii");
-xlim([0 0.7]);
+xlim([-1 15]);
 ylim([0 15])
 hold off;
 v_estimate = aperture_scene_val;

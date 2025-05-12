@@ -1,8 +1,8 @@
 clc;
 clear all;
 close all;
-
 %%
+%
 % for scnNum = 1:numel(scenes)
 %     [im,alpha] = exrread(scenes(scnNum));
 %     depthmap = im(:, :, 1);
@@ -25,7 +25,7 @@ close all;
 %     xlabel("depth");
 %     ylabel("percentage");
 % end
-%% Initialization
+% Initialization
 scenes = ["vessel_depth.exr" "dining_depth.exr" "dragon_depth.exr" ...
            "toy_depth.exr" "zoo_depth.exr" "lab_depth.exr" "camper_depth.exr" "bike_depth.exr"...
            "flower_depth.exr"];
@@ -33,8 +33,8 @@ objectmaps = ["vesselObjectmap2.hdr" "diningObjectmap.hdr" "dragonObjectmap.hdr"
     "toyObjectmap.hdr" "zooObjectmap.hdr" "labObjectmap.hdr" "camperObjectmap.hdr" "bikeObjectmap.hdr" ...
     "flowerObjectmap.hdr"];
 name = ["Vessel" "Dining" "Dragon" "Toy" "Zoo" "Lab" "Camper" "Bike" "Flower"];
-scnNum = 8;
-startColor = 2;
+scnNum =6;
+startColor = 1;
 if scnNum == 1
     objnames = ["background"; "blue vessel"; "red vessel"; "heart"];
     Zmin = [0, -0.46 -0.73 -0.117];
@@ -59,7 +59,7 @@ elseif scnNum == 4
     objnames = ["background"; "table"; "whale"; "rubic cube"; "dice green"; "plane"; "cup"; ...
         "dice red"; "ball 10"; "ball 3"; "teddy"; "soccer ball"; "ball 1"; "dice blue"];
     Zmin = [1.707, -0.592, -0.603, 0.291, -0.039, -0.25, -0.535, 0.543, -0.078, -0.441, 0.191, 0.002, -0.53, -0.258];
-    Zmax = [1.707, 1.691, -0.41, 0.326, 0.025, 0.125, 0.607, 0.695, -0.016, -0.385, 0.603, 0.119, -0.471, -0.09];
+    Zmax = [1.707, 1.691, -0.14, 0.326, 0.025, 0.125, 0.607, 0.695, -0.016, -0.385, 0.603, 0.119, -0.471, -0.09];
     Zmedian = [1.707, -0.213, -0.548, 0.312, 0.010, -0.109, 0.555, 0.558, -0.064, -0.414, 0.404, 0.035, -0.514, -0.205];
     std_curvatures = [0.0, 0.002, 0.023, 0.007, 0.002, 0.007, 0.003, 0.011, 0.002, 0.0, 0.07, 0.0, 0.0, 0.0];
 elseif scnNum == 5
@@ -72,13 +72,13 @@ elseif scnNum == 6
     objnames = ["wall"; "floor"; "left man"; "hazard pole"; "robot"; "woman"; "chair"; "bottle"; ...
         "basket"; "bottles"; "right man"];
     Zmin = [1.43, -0.85, -0.323, -0.587, -0.69, 0.543, -0.463, -0.337, -0.337, -0.323, 0.739];
-    Zmax = [1.43, 0.994, -0.174, 0.053, 0.231, 0.865, -0.447, -0.169, -0.169, -0.166, 0.883];
+    Zmax = [1.43, 0.994, -0.174, 0.35, 0.231, 0.865, -0.447, -0.169, -0.169, -0.166, 0.883];
     Zmedian = [1.43, -0.436, -0.258, -0.546, -0.2, 0.709 ,0.839, -0.46, -0.292, -0.25, 0.802];
     std_curvatures = [0.0, 0.0, 0.003, 0.011, 0.002, 0.005, 0.007, 0.0, 0.0, 0.005, 0.001];
 elseif scnNum == 7
     objnames = ["sky"; "ground"; "camper"; "satellite"; "luggage"];
     Zmin = [0, -1.17, -0.59, 0.18, -0.05];
-    Zmax = [0, 2.77, 0.22, 0.3,  0.38];
+    Zmax = [0, 9.3, 0.22, 0.3,  0.38];
     Zmedian = [0, -0.2, -0.29, 0.25,  0.12];
     std_curvatures = [0, 0.017, 0.008, 0.006, 0.004];
 elseif scnNum == 8
@@ -103,7 +103,8 @@ rgbImg = imread(strcat(name(scnNum), ".png"));
 mapSize = size(objmap);
 colors = ones(100, 3)*100;
 figure;
-imagesc(depthmap);
+imagesc(depthmap-dist2screen);
+colorbar;
 figure;
 imagesc(objmap);
 figure;
@@ -111,7 +112,7 @@ imagesc(rgbImg);
 objmap = reshape(objmap, size(objmap, 1)*size(objmap, 2), 3);
 objmap = objmap * 10;
 count = 1;
-%% Find various colors in the map
+% Find various colors in the map
 if scnNum == 4
     for ii = 1:size(objmap, 1)
         if (round(objmap(ii, :)) == [0 9 0])
@@ -142,7 +143,7 @@ colors = colors(1:count-1, :);
 %     startColor = 2;
 % end
 
-%% Compute the depth distribution of each object in the scene.
+% Compute the depth distribution of each object in the scene.
 depthDists = [];
 objects = [];
 for cc = startColor:size(colors, 1)
@@ -161,12 +162,13 @@ figure;
 patch([0 0 (count - 0) (count - 0)], [dofRange -dofRange -dofRange dofRange], [1.0 0.0 0.0], 'FaceAlpha', 0.3);
 hold on
 
-boxplot(depthDists,objects, 'Symbol','');
+boxplot(depthDists,objects);
 xlabel('Object ID');
-ylim([-1.5 3.3])
+% ylim([-1.5 3.3])
 ylabel('distance from the screen')
-title(name(scnNum))
+% title(name(scnNum))
 hold off;
+set(0, 'DefaultAxesFontName', 'Times');
 %% Compute the perimeter-area ratio of each object in the scene
 % boundary = zeros(size(colors, 1), mapSize(1), mapSize(2));
 % perimeter_area = zeros(size(colors, 1), 1);
@@ -291,11 +293,11 @@ w1 = (normalized_std_curve' + normalized_edgeDensity_normalized + normalized_ent
 % w1 = (std_curvatures' + edgeDensity_normalized + entropy_obj)/3;
 % w2 = abs(Zmin - Zmedian) .* min(abs(Zmin - dofRange), abs(Zmin + dofRange));
 % w2 = abs(Zmin - Zmedian) + min(abs(Zmin - dofRange), abs(Zmin + dofRange));
-w2 = min(abs(Zmin - dofRange), abs(Zmin + dofRange));
+w2 = min(abs(Zmin - dofRange), abs(Zmin + dofRange)) / (dofRange*2);
 
 % w3 = abs(Zmax - Zmedian) .* min(abs(Zmax - dofRange), abs(Zmax + dofRange));
 % w3 = abs(Zmax - Zmedian) + min(abs(Zmax - dofRange), abs(Zmax + dofRange));
-w3 = min(abs(Zmax - dofRange), abs(Zmax + dofRange));
+w3 = min(abs(Zmax - dofRange), abs(Zmax + dofRange)) / (dofRange*2);
 
 
 for color = startColor:size(colors, 1)
@@ -323,20 +325,21 @@ for color = startColor:size(colors, 1)
         DoFIm = reshape(DoFIm, mapSize(1), mapSize(2));
         DoFArea = numel(find(DoFIm(:)));
         outDoFArea = numel(find(outDoFIm(:)));
+        weightingFactor = w1(color) * outDoFArea/(outDoFArea + DoFArea);
         if(abs(Zmin(color)) > dofRange && abs(Zmax(color)) > dofRange)
-            W = W - (w2(color) * w3(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+            W = W - (w2(color) + w3(color)) * weightingFactor;
         elseif(abs(Zmin(color)) > dofRange && abs(Zmax(color)) < dofRange)
-            W = W - (w2(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+            W = W - w2(color) * weightingFactor;
             % W = W - w2(color) * w1(color);
             % W = W - w1(color) * outDoFArea/(outDoFArea + DoFArea);
-       elseif(abs(Zmin(color)) < dofRange && abs(Zmax(color)) > dofRange)
-            W = W - (w3(color) * w1(color)) * outDoFArea/(outDoFArea + DoFArea);
+        elseif(abs(Zmin(color)) < dofRange && abs(Zmax(color)) > dofRange)
+            W = W - w3(color) * weightingFactor;
             % W = W - w3(color) * w1(color);
         % if(cond1 || cond2)
         %    W = W - ( ) * outDoFArea/(outDoFArea + DoFArea);
         % end
         else
-            W = W + (w1(color) *  abs(Zmin(color) - Zmax(color)));
+            W = W + (w1(color) * abs(Zmin(color) - Zmax(color))/(dofRange*2));
         end
     end
 end
